@@ -5,3 +5,15 @@
 #
 #   cities = City.create([{ name: 'Chicago' }, { name: 'Copenhagen' }])
 #   Mayor.create(name: 'Emanuel', city: cities.first)
+
+ItunesApp::Feed.countries.values.each do |country|
+  ItunesApp::Feed.feed_type.values.each do |type|
+    ItunesApp::Feed.genres.values.each do |genre|
+      url = "https://itunes.apple.com/#{country}/rss/#{type}/limit=300"
+      url << "/genre=#{genre}" if genre != ''
+      url << '/json'
+
+      RssFeed.create(country: country, feed_genre: genre == '' ? 0 : genre, feed_type: type, url: url)
+    end
+  end
+end

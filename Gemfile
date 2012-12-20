@@ -6,7 +6,12 @@ gem 'rails', '3.2.9'
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
 
 gem 'mysql2'
+gem 'jquery-rails'
 
+gem 'curb', '~> 0.8.3'
+
+# charts
+gem 'lazy_high_charts'
 
 # Gems used only for assets and not required
 # in production environments by default.
@@ -20,7 +25,17 @@ group :assets do
   gem 'uglifier', '>= 1.0.3'
 end
 
-gem 'jquery-rails'
+group :test, :development do
+  gem 'rspec-rails'
+end
+
+group :test do
+  gem 'capybara', '1.1.3'
+  gem 'cucumber-rails', require: false
+  gem 'shoulda-matchers'
+  gem 'database_cleaner'
+  gem 'spork'
+end
 
 # To use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'
