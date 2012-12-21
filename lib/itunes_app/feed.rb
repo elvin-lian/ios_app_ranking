@@ -5,7 +5,7 @@ module ItunesApp
       def countries
         {
             'China' => 'CN',
-            'United States' => 'us'
+            'United States' => 'US'
         }
       end
 

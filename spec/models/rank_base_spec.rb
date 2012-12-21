@@ -8,12 +8,12 @@ describe RankBase do
       it 'should add a new record' do
         table = 'rank_test_tmp'
         drop_table(table)
-        RankBase.fly_create table, {ios_app_id: 1, rank: 1, added_at: '2012-12-20 12:00:00'}
+        RankBase.fly_create table, {ios_app_id: 1, rank: 1, added_at: '2012-12-20 12:00:00', last_updated: '2012-12-20 12:25:01'}
         RankBase.where(ios_app_id: 1).should_not be_nil
 
         table = 'rank_test_tmp2'
         drop_table(table)
-        RankBase.fly_create table, {ios_app_id: 2, rank: 1, added_at: '2012-12-20 12:00:00'}
+        RankBase.fly_create table, {ios_app_id: 2, rank: 1, added_at: '2012-12-20 12:00:00', last_updated: '2012-12-20 12:25:01'}
         RankBase.where(ios_app_id: 1).should eq []
         RankBase.where(ios_app_id: 2).should_not be_nil
       end
@@ -21,18 +21,16 @@ describe RankBase do
   end
 
   describe ':create_table!' do
-    without_transactional_fixtures do
-      context '当表不存时' do
-        before do
-          @table_name = "rank_2012_top_free_6014"
-          drop_table(@table_name)
-        end
+    context '当表不存时' do
+      before do
+        @table_name = "rank_2012_top_free_6014"
+        drop_table(@table_name)
+      end
 
-        it '应用创建表' do
-          ActiveRecord::Base.connection.table_exists?(@table_name).should eq false
-          RankBase.create_table!(@table_name)
-          ActiveRecord::Base.connection.table_exists?(@table_name).should eq true
-        end
+      it '应用创建表' do
+        ActiveRecord::Base.connection.table_exists?(@table_name).should eq false
+        RankBase.create_table!(@table_name)
+        ActiveRecord::Base.connection.table_exists?(@table_name).should eq true
       end
     end
   end

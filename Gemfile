@@ -10,6 +10,9 @@ gem 'jquery-rails'
 
 gem 'curb', '~> 0.8.3'
 
+# daemons
+gem 'daemons', '~> 1.1.9'
+
 # charts
 gem 'lazy_high_charts'
 

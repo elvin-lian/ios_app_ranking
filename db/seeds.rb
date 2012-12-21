@@ -13,7 +13,7 @@ ItunesApp::Feed.countries.values.each do |country|
       url << "/genre=#{genre}" if genre != ''
       url << '/json'
 
-      RssFeed.create(country: country, feed_genre: genre == '' ? 0 : genre, feed_type: type, url: url)
+      RssFeed.create(country: country.downcase, feed_genre: genre == '' ? 0 : genre, feed_type: type, url: url)
     end
   end
 end

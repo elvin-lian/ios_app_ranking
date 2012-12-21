@@ -33,7 +33,8 @@ describe ToolLookUp do
 
       got = ToolLookUp.format_feed_result(@feed_result)
       got.is_a?(Hash).should be true
-      got[:updated_at].should eq '2012-12-20 05:00:00'
+      got[:updated].should eq '2012-12-20 05:36:32'
+      got[:added_at].should eq Time.now.utc.beginning_of_hour.to_formatted_s(:db)
       got[:apps].size.should eq 10
       got[:apps].first.should eq ({
           artwork_url_100: 'http://a1303.phobos.apple.com/us/r1000/060/Purple/v4/e6/88/97/e6889717-8301-7eff-e08a-0989ac3e1234/mzl.ysodlegv.100x100-75.png',
@@ -53,7 +54,8 @@ describe ToolLookUp do
 
       got = ToolLookUp.format_feed_result(@feed_result)
       got.is_a?(Hash).should be true
-      got[:updated_at].should eq '2012-12-20 07:00:00'
+      got[:updated].should eq '2012-12-20 07:14:56'
+      got[:added_at].should eq Time.now.utc.beginning_of_hour.to_formatted_s(:db)
       got[:apps].size.should eq 10
       got[:apps].first.should eq ({
           artwork_url_100: 'http://a1303.phobos.apple.com/us/r1000/060/Purple/v4/e6/88/97/e6889717-8301-7eff-e08a-0989ac3e1234/mzl.ysodlegv.100x100-75.png',
@@ -68,12 +70,13 @@ describe ToolLookUp do
     end
   end
 
-  describe ':save', working: true do
+  describe ':save' do
     before do
       @feed = RssFeed.create(country: 'cn', feed_type: 'free_app', feed_genre: '6014', url: 'http://example.com')
 
       @data = {
-          updated_at: '2012-12-20 07:00:00',
+          updated: '2012-12-20 07:00:00',
+          added_at: Time.now.utc.beginning_of_hour.to_formatted_s(:db),
           apps: [{
                      artwork_url_100: 'http://a1303.phobos.apple.com/us/r1000/060/Purple/v4/e6/88/97/e6889717-8301-7eff-e08a-0989ac3e1234/mzl.ysodlegv.100x100-75.png',
                      currency: 'CNY',
@@ -93,7 +96,7 @@ describe ToolLookUp do
 
           ActiveRecord::Base.connection.execute("truncate ios_apps")
 
-          ToolLookUp.save(@feed, @data)
+          ToolLookUp.save(@feed.rank_table_name, @data)
 
           table_name = "rank_#{Time.now.year}_cn_free_app_6014"
           RankBase.table_name = table_name

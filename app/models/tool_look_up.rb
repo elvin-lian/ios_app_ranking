@@ -1,20 +1,57 @@
 class ToolLookUp
   class << self
 
-    def run_all
-      RssFeed.all do |feed|
+    def batch_run country, feed_type
+      country = country.downcase
+      feed_type = feed_type.downcase
+      total_count = RssFeed.where(country: country, feed_type: feed_type).count
+      limit = (total_count / 2.0).ceil # max poll of db connection is 8
+      offset = 0
+      threads = []
+      while offset < total_count
+        threads << Thread.new(offset) do |o|
+          run(country, feed_type, limit, o)
+          ActiveRecord::Base.connection.close
+        end
+        offset += limit
+      end
+      threads.each { |aThread| aThread.join }
+      true
+    end
+
+    def run country, feed_type, limit, offset
+      RssFeed.where(country: country, feed_type: feed_type).limit(limit).offset(offset).each do |feed|
         data = format_feed_result fetch_by_url(feed.url)
-        save(feed, data) if data
+        save(feed.rank_table_name, data) if data
+      end
+      true
+    end
+
+    def run_one rss_reed_id
+      if (feed = RssFeed.find_by_id(rss_reed_id))
+        data = format_feed_result fetch_by_url(feed.url)
+        save(feed.rank_table_name, data) if data
+        true
+      else
+        nil
       end
     end
 
-    def save feed, data
-      return nil unless data and data[:updated_at] and data[:apps].size > 0
+    def save rank_table_name, data
+      return nil unless data and data[:updated] and data[:apps].size > 0
       rank = 0
       data[:apps].each do |app|
-        if (a = IosApp.create(app)) and a.id
+        if (a = IosApp.find_by_track_id(app[:track_id]))
+          if Time.now.to_i - a.updated_at.to_i > 86400 * 2
+            a.update_attributes(app)
+          end
+        else
+          a = IosApp.create(app)
+        end
+
+        if a and a.id
           rank += 1
-          RankBase.fly_create feed.rank_table_name, {ios_app_id: a.id, rank: rank, added_at: data[:updated_at]}
+          RankBase.fly_create rank_table_name, {ios_app_id: a.id, rank: rank, added_at: data[:added_at], last_updated: data[:updated]}
         end
       end
     end
@@ -39,10 +76,10 @@ class ToolLookUp
 
     def format_feed_result feed_result
       return nil unless feed_result.is_a?(Hash) and (feed = feed_result['feed'])
-      data = {:updated_at => nil, :apps => []}
+      data = {:updated => nil, :apps => [], added_at: Time.now.utc.beginning_of_hour.to_formatted_s(:db)}
 
       # updated_at
-      data[:updated_at] = Time.parse(feed['updated']['label']).utc.at_beginning_of_hour.to_formatted_s(:db) if feed['updated']
+      data[:updated] = Time.parse(feed['updated']['label']).utc.to_formatted_s(:db) if feed['updated']
 
       # app
       feed['entry'].each { |app| data[:apps] << format_app_at_feed_result(app) } if feed['entry']

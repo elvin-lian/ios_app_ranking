@@ -13,7 +13,7 @@ development:
   encoding: utf8
   reconnect: false
   database: ios_app_ranking_development
-  pool: 5
+  pool: 10
   username: root
   password:
   socket: /var/run/mysqld/mysqld.sock
@@ -36,7 +36,7 @@ production:
   encoding: utf8
   reconnect: false
   database: ios_app_ranking_production
-  pool: 5
+  pool: 10
   username: root
   password:
   socket: /var/run/mysqld/mysqld.sock
