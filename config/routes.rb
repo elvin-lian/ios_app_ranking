@@ -1,4 +1,16 @@
 IosAppRanking::Application.routes.draw do
+
+  def api_v1_routes
+    namespace :v1 do
+      resources :stats do
+        collection do
+          get ':track_id/:stats_type' => 'stats#index'
+        end
+      end
+    end
+  end
+
+  api_v1_routes
   # The priority is based upon order of creation:
   # first created -> highest priority.
 

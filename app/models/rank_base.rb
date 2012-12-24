@@ -32,12 +32,13 @@ class RankBase < ActiveRecord::Base
     end
   end
 
-  def self.format_table_name country, feed_type, app_genre
-    if feed_type.blank? or app_genre.blank?
+  def self.format_table_name country, feed_type, app_genre, year = nil
+    if country.blank? or feed_type.blank? or app_genre.blank?
       raise 'error table name'
     else
       feed_type = feed_type.gsub(/applications/, '')
-      "rank_#{Time.now.year}_#{country}_#{feed_type}_#{app_genre}"
+      year = Time.now.year if year.nil?
+      "rank_#{year}_#{country}_#{feed_type}_#{app_genre}"
     end
   end
 end

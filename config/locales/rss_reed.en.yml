@@ -1,0 +1,34 @@
+en:
+  feed:
+    genre_0: All Genres
+    genre_6018: Books
+    genre_6000: Business
+    genre_6022: Catalogs
+    genre_6017: Education
+    genre_6016: Entertainment
+    genre_6015: Finance
+    genre_6023: Food &amp; Drink
+    genre_6014: Games
+    genre_6013: Health &amp; Fitness
+    genre_6012: Lifestyle
+    genre_6020: Medical
+    genre_6011: Music
+    genre_6010: Navigation
+    genre_6009: News
+    genre_6021: Newsstand
+    genre_6008: Photo &amp; Video
+    genre_6007: Productivity
+    genre_6006: Reference
+    genre_6005: Social Networking
+    genre_6004: Sports
+    genre_6003: Travel
+    genre_6002: Utilities
+    genre_6001: Weather
+
+    type:
+      topfree: Top Free Apps
+      toppaid: Top Paid Apps
+
+  country:
+    cn: CN
+    us: US

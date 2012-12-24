@@ -8,7 +8,10 @@ class CreateIosApps < ActiveRecord::Migration
       t.integer :primary_genre_id
       t.string :track_view_url, :limit => 300
       t.string :artwork_url_100
-      t.text :description
+
+      t.string :feed_country
+      t.string :feed_type
+      t.string :feed_genre
 
       t.timestamps
     end
