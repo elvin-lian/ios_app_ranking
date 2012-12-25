@@ -55,7 +55,7 @@ namespace :db do
     end
 
     db_config = <<-EOF
-production:
+staging:
   adapter: mysql2
   encoding: utf8
   pool: 10
