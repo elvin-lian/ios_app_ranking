@@ -10,14 +10,14 @@ after "deploy:update_code", "db:symlink", "deploy:migrate", "deploy:finalize_upd
 set :rails_env, "staging"
 
 set :application, "IosAppRanking"
-set :user, "twihoo"
-set :group, "twihoo"
+set :user, "deploy"
+set :group, "deploy"
 set :use_sudo, false
 
-set :repository, "git@bitbucket.org:lqq/ios_app_ranking.git"
+set :repository, "git@github.com:elvin-lian/ios_app_ranking.git"
 set :branch, "develop"
 set :scm, :git
-set :scm_username, "lqq"
+set :scm_username, "elvin-lian"
 set :scm_password, ""
 
 set :database_username, "root"

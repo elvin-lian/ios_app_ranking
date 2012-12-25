@@ -16,6 +16,9 @@ gem 'daemons', '~> 1.1.9'
 # charts
 gem 'lazy_high_charts'
 
+# cache
+gem 'dalli'
+
 # Gems used only for assets and not required
 # in production environments by default.
 group :assets do

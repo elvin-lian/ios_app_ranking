@@ -45,8 +45,6 @@ IosAppRanking::Application.configure do
   config.memcached_host = 'localhost:11211'
 
   # Enable serving of images, stylesheets, and JavaScripts from an asset server
-  config.action_controller.asset_host = "http://183.62.41.82:3004"
-  config.api_host = 'http://183.62.41.82:3004'
 
   # Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
   # config.assets.precompile += %w( search.js )
