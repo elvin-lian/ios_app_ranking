@@ -31,7 +31,7 @@ IosAppRanking::Application.configure do
   # config.force_ssl = true
 
   # See everything in the log (default is :info)
-  # config.log_level = :debug
+  config.log_level = :debug
 
   # Prepend all log lines with the following tags
   # config.log_tags = [ :subdomain, :uuid ]
@@ -45,7 +45,8 @@ IosAppRanking::Application.configure do
   config.memcached_host = 'localhost:11211'
 
   # Enable serving of images, stylesheets, and JavaScripts from an asset server
-  # config.action_controller.asset_host = "http://assets.example.com"
+  config.action_controller.asset_host = "http://183.62.41.82:3004"
+  config.api_host = 'http://183.62.41.82:3004'
 
   # Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
   # config.assets.precompile += %w( search.js )
