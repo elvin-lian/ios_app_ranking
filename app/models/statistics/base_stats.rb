@@ -1,7 +1,7 @@
 module Statistics
   class BaseStats
 
-    attr_accessor :countries, :feed_types, :app_genres, :ios_app, :params, :year, :begin_at, :end_at
+    attr_accessor :countries, :feed_types, :app_genres, :ios_app, :params, :years, :begin_at, :end_at
 
     def initialize params
       self.countries = self.feed_types = self.app_genres = []
@@ -12,6 +12,7 @@ module Statistics
         init_app_genres
       end
       init_date
+      init_year
     end
 
     def stats
@@ -22,16 +23,19 @@ module Statistics
       self.countries.each do |country|
         self.feed_types.each do |feed_type|
           self.app_genres.each do |app_genre|
-            table_name = RankBase.format_table_name(country, feed_type, app_genre, self.year)
+            self.years.each do |year|
+              table_name = RankBase.format_table_name(country, feed_type, app_genre, year)
 
-            next unless ActiveRecord::Base.connection.table_exists? table_name
+              next unless ActiveRecord::Base.connection.table_exists? table_name
 
-            if (current_rank = get_current_rank(table_name))
-              stats[country] ||= {}
-              stats[country][app_genre] ||= {}
-              stats[country][app_genre][:name] = I18n.t("feed.genre_#{app_genre}")
-              stats[country][app_genre][:current_rank] = current_rank
-              stats[country][app_genre][:data] = get_stats(table_name)
+              if (current_rank = get_current_rank(table_name))
+                stats[country] ||= {}
+                stats[country][app_genre] ||= {}
+                stats[country][app_genre][:name] = I18n.t("feed.genre_#{app_genre}")
+                stats[country][app_genre][:current_rank] = current_rank
+                stats[country][app_genre][:data] ||= []
+                stats[country][app_genre][:data] += get_stats(table_name)
+              end
             end
           end
         end
@@ -44,16 +48,20 @@ module Statistics
     end
 
     def get_current_rank table_name
-      RankBase.table_name = table_name
-      if (rb = RankBase.where(ios_app_id: self.ios_app.id).order('id DESC').first)
-        if Time.now - rb.added_at <= 1.hour
-          rb.rank
+      key = "current_ios_app_rank_#{self.ios_app.id}_#{table_name}"
+      res = Rails.cache.fetch(md5(key), expires_in: expires_in) do
+        RankBase.table_name = table_name
+        if (rb = RankBase.where(ios_app_id: self.ios_app.id).order('id DESC').first)
+          if Time.now - rb.added_at <= 1.hour
+            rb.rank
+          else
+            0
+          end
         else
-          0
+          -1
         end
-      else
-        nil
       end
+      res.to_i == -1 ? nil : res.to_i
     end
 
     def parse_datetime datetime
@@ -63,6 +71,14 @@ module Statistics
       rescue => error
       end
       res
+    end
+
+    def expires_in
+      600
+    end
+
+    def md5 string
+      Digest::MD5.hexdigest(string)
     end
 
     private
@@ -110,12 +126,26 @@ module Statistics
       elsif self.begin_at and self.end_at
         self.end_at = self.end_at + 1.day
       else
-        self.begin_at = (Time.now - 30.days).beginning_of_day.utc
-        self.end_at = Time.now
+        self.begin_at = (Time.now - 15.days).beginning_of_day.utc
+        self.end_at = Time.now.utc
       end
 
-      self.year = self.begin_at.year
+      if self.begin_at > Time.now.utc
+        self.begin_at = Time.now.beginning_of_day.utc
+        self.end_at = self.begin_at + 1.day
+      end
+
+      if self.end_at - self.begin_at > 100.days
+        self.end_at = self.begin_at + 1.days
+      end
+
+      self.end_at = Time.now.beginning_of_day.utc + 1.day if self.end_at > Time.now.utc
+
       nil
+    end
+
+    def init_year
+      self.years = [self.begin_at.year, self.end_at.year].uniq
     end
 
   end
