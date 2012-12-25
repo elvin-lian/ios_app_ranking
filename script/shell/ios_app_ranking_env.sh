@@ -13,7 +13,7 @@ elif [ "production" = $RAILS_ENV ]; then
     IOS_APP_RANKING_PATH="/www/ios_app_ranking/current"
     RVM_SOURCE_PATH="/home/hoo/.rvm/environments/ruby-1.9.3-p286"
 elif [ "staging" = $RAILS_ENV ]; then
-    IOS_APP_RANKING_PATH="/var/www/ios_app_ranking_staging/current"
+    IOS_APP_RANKING_PATH="/var/www/ios_app_ranking/current"
     RVM_SOURCE_PATH="/home/twihoo/.rvm/environments/ruby-1.9.3-p286"
 else
     echo "fail. can not find Rails env of $RAILS_ENV."
