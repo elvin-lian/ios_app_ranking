@@ -52,7 +52,7 @@ module Statistics
       res = Rails.cache.fetch(md5(key), expires_in: expires_in) do
         RankBase.table_name = table_name
         if (rb = RankBase.where(ios_app_id: self.ios_app.id).order('id DESC').first)
-          if Time.now - rb.added_at <= 1.hour
+          if Time.now - rb.added_at <= 2.hour
             rb.rank
           else
             0
@@ -74,7 +74,7 @@ module Statistics
     end
 
     def expires_in
-      600
+      900
     end
 
     def md5 string
