@@ -23,16 +23,19 @@ module Statistics
       self.countries.each do |country|
         self.feed_types.each do |feed_type|
           self.app_genres.each do |app_genre|
+            started_log_at = nil
             self.years.each do |year|
               table_name = RankBase.format_table_name(country, feed_type, app_genre, year)
 
               next unless ActiveRecord::Base.connection.table_exists? table_name
+              started_log_at ||= get_started_log_at(table_name)
 
               if (current_rank = get_current_rank(table_name))
                 stats[country] ||= {}
                 stats[country][app_genre] ||= {}
                 stats[country][app_genre][:name] = I18n.t("feed.genre_#{app_genre}")
                 stats[country][app_genre][:current_rank] = current_rank
+                stats[country][app_genre][:started_at] = started_log_at
                 stats[country][app_genre][:data] ||= []
                 stats[country][app_genre][:data] += get_stats(table_name)
               end
@@ -64,6 +67,18 @@ module Statistics
       res.to_i == -1 ? nil : res.to_i
     end
 
+    def get_started_log_at table_name
+      key = "started_log_at_#{self.ios_app.id}_#{table_name}"
+      Rails.cache.fetch(md5(key), expires_in: 30.days.to_i) do
+        RankBase.table_name = table_name
+        if (rb = RankBase.where(ios_app_id: self.ios_app.id).order('id ASC').first)
+          rb.added_at.to_s
+        else
+          Time.now.beginning_of_hour.utc.to_s
+        end
+      end
+    end
+
     def parse_datetime datetime
       res = nil
       begin
@@ -79,6 +94,10 @@ module Statistics
 
     def md5 string
       Digest::MD5.hexdigest(string)
+    end
+
+    def stats_type
+      self.class.name
     end
 
     private
@@ -126,8 +145,17 @@ module Statistics
       elsif self.begin_at and self.end_at
         self.end_at = self.end_at + 1.day
       else
-        self.begin_at = (Time.now - 15.days).beginning_of_day.utc
-        self.end_at = Time.now.utc
+        case stats_type
+          when 'Statistics::Daily'
+            self.begin_at = (Time.now - 24.days).beginning_of_day.utc
+            self.end_at = Time.now.utc
+          when 'Statistics::Hourly'
+            self.begin_at = (Time.now - 24.hours).beginning_of_hour.utc
+            self.end_at = Time.now.beginning_of_hour.utc
+          else
+            self.begin_at = Timw.now.beginning_of_day.utc
+            self.end_at = Time.now.utc
+        end
       end
 
       if self.begin_at > Time.now.utc
