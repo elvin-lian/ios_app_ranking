@@ -58,7 +58,7 @@ module Statistics
           if Time.now - rb.added_at <= 2.hour
             rb.rank
           else
-            0
+            over_rank_number
           end
         else
           -1
@@ -90,6 +90,10 @@ module Statistics
 
     def expires_in
       900
+    end
+
+    def over_rank_number
+      301
     end
 
     def md5 string
