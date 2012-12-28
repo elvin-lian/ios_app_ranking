@@ -1,0 +1,8 @@
+en:
+  api:
+    mess:
+      invalidate_request: Invalidate Request
+      invalidate_params: Invalidate Params
+      something_wrong_try_again: "Something wrong, please try again soon"
+      authorization_failed: Authorization failed
+

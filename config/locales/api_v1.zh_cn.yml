@@ -1,0 +1,8 @@
+zh_cn:
+  api:
+    mess:
+      invalidate_request: 非法请求
+      invalidate_params: 非法参数
+      something_wrong_try_again: 网络异常请重试
+      authorization_failed: 授权失败
+

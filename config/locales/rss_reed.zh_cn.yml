@@ -1,0 +1,34 @@
+zh_cn:
+  feed:
+    genre_0: 所有类型
+    genre_6004: 体育
+    genre_6013: 健康健美
+    genre_6020: 医疗
+    genre_6006: 参考
+    genre_6000: 商业
+    genre_6022: 商品指南
+    genre_6018: 图书
+    genre_6001: 天气
+    genre_6016: 娱乐
+    genre_6010: 导航
+    genre_6002: 工具
+    genre_6021: 报刊杂志
+    genre_6008: 摄影与录像
+    genre_6007: 效率
+    genre_6017: 教育
+    genre_6009: 新闻
+    genre_6003: 旅行
+    genre_6014: 游戏
+    genre_6012: 生活
+    genre_6005: 社交
+    genre_6023: 美食佳饮
+    genre_6015: 财务
+    genre_6011: 音乐
+
+    type:
+      topfree: '免费 App 排名'
+      toppaid: '收费 App 排名'
+
+  country:
+    cn: 中国
+    us: 美国

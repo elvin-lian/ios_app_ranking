@@ -6,6 +6,7 @@ module Statistics
     def initialize params
       self.countries = self.feed_types = self.app_genres = []
       self.params = params
+
       if (self.ios_app = IosApp.find_by_track_id(params['track_id']))
         init_countries
         init_feed_types
@@ -48,6 +49,18 @@ module Statistics
 
     def get_stats table_name
       []
+    end
+
+    def fill_full_datetime data, range = 1.day
+      res = []
+      first_datetime = self.begin_at
+      last_datetime = self.end_at
+      while first_datetime < last_datetime
+        rank = data[first_datetime.to_s] ? data[first_datetime.to_s] : no_rank_number
+        res << {datetime: first_datetime.to_s, rank: rank}
+        first_datetime += range
+      end
+      res
     end
 
     def get_current_rank table_name
@@ -96,6 +109,10 @@ module Statistics
       301
     end
 
+    def no_rank_number
+      301
+    end
+
     def md5 string
       Digest::MD5.hexdigest(string)
     end
@@ -123,17 +140,21 @@ module Statistics
       if self.params['feed_type'] and self.params['feed_type'].downcase.gsub(/applications/, '').in?(feed_types)
         self.feed_types = [self.params['feed_type'].downcase.gsub(/applications/, '')]
       else
-        self.feed_types = self.ios_app.feed_type.split(',')
+        self.feed_types = self.ios_app.feed_type.to_s.split(',')
       end
     end
 
     def init_app_genres
       app_genres = []
       ItunesApp::Feed.genres.values.each { |genre| app_genres << genre.to_i }
-      if self.params['app_genre'] and self.params['app_genre'].to_i.in?(app_genres)
-        self.app_genres = [self.params['app_genre'].to_i]
+      if self.params['app_genre']
+        self.app_genres = []
+        self.params['app_genre'].to_s.split(',').each do |g|
+          self.app_genres << g.to_i if g.to_i.in?(app_genres)
+        end
+        self.app_genres = self.app_genres.uniq
       else
-        self.app_genres = self.ios_app.feed_genre.split(',')
+        self.app_genres = self.ios_app.feed_genre.to_s.split(',')
       end
     end
 
@@ -148,11 +169,11 @@ module Statistics
         self.begin_at = date
         self.end_at = date + 1.day
       elsif self.begin_at and self.end_at
-        self.end_at = self.end_at + 1.day
+
       else
         case stats_type
           when 'Statistics::Daily'
-            self.begin_at = (Time.now - 24.days).beginning_of_day.utc
+            self.begin_at = (Time.now - 23.days).beginning_of_day.utc
             self.end_at = Time.now.utc
           when 'Statistics::Hourly'
             self.begin_at = (Time.now - 24.hours).beginning_of_hour.utc

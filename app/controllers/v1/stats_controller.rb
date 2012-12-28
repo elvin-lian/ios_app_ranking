@@ -1,4 +1,6 @@
 class V1::StatsController < V1::ApiBaseController
+  before_filter
+
   def index
     case params[:stats_type].downcase
       when 'daily'
@@ -10,5 +12,9 @@ class V1::StatsController < V1::ApiBaseController
       else
         render json: {status: 0}
     end
+  end
+
+  def except_auth_params
+    %w(stats_type track_id)
   end
 end

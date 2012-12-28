@@ -1,17 +1,24 @@
 module ItunesApp
   module ApiRequirement
-    def api_authenticate(params, controller_name)
+    def api_authenticate params, app_secret, except_auth_params = []
       if params
-        controller_name = controller_name.singularize
-        params_tmp = params
-        params_tmp.delete(controller_name)
-        s = params_tmp.delete('s')
-        params_tmp['tkey'] = Rails.application.config.api_requirement_secret
-        res = ''
-        Hash[params_tmp.sort].each_value { |v| res += v.to_s }
-        s = s.downcase if !s.nil?
+        params_tmp = params.clone
 
-        Rails.logger.debug("===== s: #{Digest::SHA1.hexdigest(res)}")
+        except_auth_params.each do |k|
+          params_tmp.delete(k)
+        end
+
+        s = params_tmp.delete('s')
+
+        s = s.downcase unless s.nil?
+
+        res = (params_tmp.sort.collect { |c| "#{c[0]}#{c[1]}" }).join('')
+        res = app_secret + res + app_secret
+
+        #Rails.logger.debug("=====  params: #{params_tmp}")
+        #Rails.logger.debug("=====   s: #{s}")
+        #Rails.logger.debug("===== res: #{Digest::SHA1.hexdigest(res)}")
+
         Digest::SHA1.hexdigest(res).eql?(s)
       else
         false
