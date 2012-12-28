@@ -112,7 +112,8 @@ module Statistics
       if self.params['country'] and self.params['country'].downcase.in?(country_code)
         self.countries = [self.params['country'].downcase]
       else
-        self.countries = self.ios_app.feed_country.split(',')
+        #self.countries = self.ios_app.feed_country.split(',')
+        self.countries = %w(cn)
       end
     end
 
@@ -157,7 +158,7 @@ module Statistics
             self.begin_at = (Time.now - 24.hours).beginning_of_hour.utc
             self.end_at = Time.now.beginning_of_hour.utc
           else
-            self.begin_at = Timw.now.beginning_of_day.utc
+            self.begin_at = Time.now.beginning_of_day.utc
             self.end_at = Time.now.utc
         end
       end
