@@ -21,7 +21,7 @@ class ToolLookUp
 
     def run_one rss_reed_id
       if (feed = RssFeed.find_by_id(rss_reed_id))
-        data = format_feed_result fetch_by_url(feed.url)
+        data = get_data(feed.url)
         save(feed.rank_table_name, add_feed_info_to_apps(feed, data)) if data
         true
       else
@@ -34,14 +34,15 @@ class ToolLookUp
       return res if url.blank?
 
       retries = 0
-      max_retries = 6
+      max_retries = 10
       begin
         response = Curl::Easy.http_get(url)
         res = JSON.parse(response.body_str) if response.body_str
 
       rescue => error
-        Rails.logger.debug("==#{Time.now.to_s}, Itunes lookup #{url} error: #{error}")
         retries += 1
+        Rails.logger.debug("==#{Time.now.to_s}, Itunes lookup #{url} error: #{error}, run: #{retries}")
+        sleep(retries + retries * 2)
         retry if retries < max_retries
       end
       res
@@ -49,6 +50,7 @@ class ToolLookUp
 
     def format_feed_result feed_result
       return nil unless feed_result.is_a?(Hash) and (feed = feed_result['feed'])
+
       data = {:updated => nil, :apps => [], added_at: Time.now.utc.beginning_of_hour.to_formatted_s(:db)}
 
       # updated_at
@@ -64,10 +66,23 @@ class ToolLookUp
 
     def run country, feed_type, limit, offset
       RssFeed.where(country: country, feed_type: feed_type).limit(limit).offset(offset).each do |feed|
-        data = format_feed_result fetch_by_url(feed.url)
+        data = get_data(feed.url)
         save(feed.rank_table_name, add_feed_info_to_apps(feed, data)) if data
       end
       true
+    end
+
+    def get_data feed_url
+      retries = 0
+      max_retries = 10
+      data = nil
+      while retries < max_retries and (data.nil? or data[:updated].nil? or data[:apps].nil? or data[:apps].size < 1)
+        data = format_feed_result fetch_by_url(feed_url)
+        retries += 1
+        sleep( retries + retries * 2)
+        Rails.logger.debug "==#{Time.now.to_s}--#{feed_url} run: #{retries}"
+      end
+      data
     end
 
     def save rank_table_name, data
