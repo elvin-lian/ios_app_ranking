@@ -1,40 +1,17 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 require 'rubygems'
-require 'daemons'
 
 environment = ARGV[1]
-country = ARGV[2]
-feed_type =ARGV[3]
+country = ARGV[2] ? ARGV[2] : 'CN'
+feed_type = ARGV[3] ? ARGV[3] : 'topfreeapplications'
 
 dir = File.expand_path(File.join(File.dirname(__FILE__), '..'))
+Dir.chdir dir
 
-daemon_options = {
-    :multiple => false,
-    :dir_mode => :normal,
-    :dir => File.join(dir, 'tmp', 'pids'),
-    :backtrace => true
-}
+ENV['RAILS_ENV'] = environment ? environment : 'production'
+require File.expand_path(File.join(File.dirname(__FILE__), '..', 'config', 'environment'))
 
-country = country ? country : 'CN'
-feed_type = feed_type ? feed_type : 'topfreeapplications'
-
-Daemons.run_proc("collect_#{country.downcase}_#{feed_type}_top_ios_apps", daemon_options) do
-  p "== Begin at #{Time.now}"
-
-  if ARGV.include?('--')
-    ARGV.slice! 0..ARGV.index('--')
-  else
-    ARGV.clear
-  end
-
-  Dir.chdir dir
-
-  ENV['RAILS_ENV'] = environment ? environment : 'production'
-
-  require File.expand_path(File.join(File.dirname(__FILE__), '..', 'config', 'environment'))
-
-  ToolLookUp.batch_run(country, feed_type)
-
-  p "== End at #{Time.now}"
-end
+p "== Begin at #{Time.now}"
+ToolLookUp.batch_run(country, feed_type)
+p "== End at #{Time.now}"
