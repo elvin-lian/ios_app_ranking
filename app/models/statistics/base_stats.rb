@@ -147,7 +147,7 @@ module Statistics
     def init_app_genres
       app_genres = []
       ItunesApp::Feed.genres.values.each { |genre| app_genres << genre.to_i }
-      if self.params['app_genre']
+      if self.params['app_genre'] and self.params['app_genre'] != ''
         self.app_genres = []
         self.params['app_genre'].to_s.split(',').each do |g|
           self.app_genres << g.to_i if g.to_i.in?(app_genres)
