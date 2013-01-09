@@ -32,16 +32,11 @@ module Statistics
     def single_output_daily_and_hourly params, user
       daily_stats = Statistics::Daily.new(params['id'], params).stats
       hourly_stats = Statistics::Hourly.new(params['id'], params).stats
-
-      if daily_stats.nil? or hourly_stats.nil?
-        {status: 0}
-      else
-        {
-            status: 1,
-            daily_stats: daily_stats,
-            hourly_stats: hourly_stats
-        }
-      end
+      {
+          status: 1,
+          daily_stats: daily_stats,
+          hourly_stats: hourly_stats
+      }
     end
 
     def multi_apps_stats params, user
