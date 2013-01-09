@@ -2,9 +2,9 @@ IosAppRanking::Application.routes.draw do
 
   def api_v1_routes
     namespace :v1 do
-      resources :stats do
+      resources :stats, :only => :index do
         collection do
-          get ':track_id/:stats_type' => 'stats#index'
+          get ':stats_type(/:id)' => 'stats#stats'
         end
       end
     end

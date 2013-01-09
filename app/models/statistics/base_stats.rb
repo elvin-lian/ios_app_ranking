@@ -3,11 +3,11 @@ module Statistics
 
     attr_accessor :countries, :feed_types, :app_genres, :ios_app, :params, :years, :begin_at, :end_at
 
-    def initialize params
+    def initialize track_id, params
       self.countries = self.feed_types = self.app_genres = []
       self.params = params
 
-      if (self.ios_app = IosApp.find_by_track_id(params['track_id']))
+      if (self.ios_app = IosApp.find_by_track_id(track_id))
         init_countries
         init_feed_types
         init_app_genres
@@ -17,8 +17,7 @@ module Statistics
     end
 
     def stats
-      res = {status: 0}
-      return res if self.ios_app.nil?
+      return nil if self.ios_app.nil?
 
       stats = {}
       self.countries.each do |country|
@@ -44,7 +43,7 @@ module Statistics
           end
         end
       end
-      {status: 1, stats: stats}
+      stats
     end
 
     def get_stats table_name
