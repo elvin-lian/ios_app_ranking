@@ -23,13 +23,11 @@ module Statistics
       self.countries.each do |country|
         self.feed_types.each do |feed_type|
           self.app_genres.each do |app_genre|
-            started_log_at = nil
-
+            started_log_at = get_started_log_at(country, feed_type, app_genre)
             self.years.each do |year|
               table_name = RankBase.format_table_name(country, feed_type, app_genre, year)
 
               next unless ActiveRecord::Base.connection.table_exists? table_name
-              started_log_at ||= get_started_log_at(table_name)
 
               if (current_rank = get_current_rank(table_name))
                 stats[country] ||= {}
@@ -96,16 +94,21 @@ module Statistics
       res.to_i == -1 ? nil : res.to_i
     end
 
-    def get_started_log_at table_name
-      key = "started_log_at_#{self.ios_app.id}_#{table_name}"
-      Rails.cache.fetch(md5(key), expires_in: 30.days.to_i) do
-        RankBase.table_name = table_name
-        if (rb = RankBase.where(ios_app_id: self.ios_app.id).order('id ASC').first)
-          rb.added_at.to_s
-        else
-          Time.now.beginning_of_hour.utc.to_s
+    def get_started_log_at country, feed_type, app_genre
+      key = "started_log_at_#{self.ios_app.id}_#{country}_#{feed_type}_#{app_genre}"
+      log_at = Rails.cache.fetch(md5(key), expires_in: 30.days.to_i) do
+        res = ''
+        [Time.now.year - 1, Time.now.year].each do |year|
+          RankBase.table_name = RankBase.format_table_name(country, feed_type, app_genre, year)
+          if (rb = RankBase.where(ios_app_id: self.ios_app.id).order('id ASC').first)
+            res = rb.added_at.to_s
+            break
+          end
         end
+        res
       end
+      log_at = Time.now.beginning_of_hour.utc.to_s if log_at == ''
+      log_at
     end
 
     def parse_datetime datetime
