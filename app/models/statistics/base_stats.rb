@@ -24,6 +24,7 @@ module Statistics
         self.feed_types.each do |feed_type|
           self.app_genres.each do |app_genre|
             started_log_at = nil
+
             self.years.each do |year|
               table_name = RankBase.format_table_name(country, feed_type, app_genre, year)
 
@@ -37,7 +38,7 @@ module Statistics
                 stats[country][app_genre][:current_rank] = current_rank
                 stats[country][app_genre][:started_at] = started_log_at
                 stats[country][app_genre][:data] ||= []
-                stats[country][app_genre][:data] += get_stats(table_name)
+                stats[country][app_genre][:data] += get_stats(table_name, fixed_begin_at(year), fixed_end_at(year))
               end
             end
           end
@@ -46,18 +47,34 @@ module Statistics
       stats
     end
 
-    def get_stats table_name
+    def fixed_begin_at year
+      if self.begin_at.localtime.year < year
+        (self.begin_at + 1.year).localtime.beginning_of_year.utc
+      else
+        self.begin_at.utc
+      end
+    end
+
+    def fixed_end_at year
+      if self.end_at.localtime.year > year
+        self.end_at.localtime.beginning_of_year.utc
+      else
+        self.end_at.utc
+      end
+    end
+
+    def get_stats table_name, begin_at, end_at
       []
     end
 
-    def fill_full_datetime data, range = 1.day
+    def fill_full_datetime data, begin_at, end_at, range = 1.day
       res = []
-      first_datetime = self.begin_at
-      last_datetime = self.end_at
-      while first_datetime < last_datetime
-        rank = data[first_datetime.to_s] ? data[first_datetime.to_s] : no_rank_number
-        res << {datetime: first_datetime.to_s, rank: rank}
-        first_datetime += range
+      i = 0
+      while begin_at < end_at and i < 10000
+        rank = data[begin_at.to_s] ? data[begin_at.to_s] : no_rank_number
+        res << {datetime: begin_at.to_s, rank: rank}
+        begin_at += range
+        i += 1
       end
       res
     end
@@ -168,7 +185,8 @@ module Statistics
         self.begin_at = date
         self.end_at = date + 1.day
       elsif self.begin_at and self.end_at
-
+        self.begin_at = self.begin_at.localtime.beginning_of_day.utc
+        self.end_at = self.end_at.localtime.utc
       else
         case stats_type
           when 'Statistics::Daily'
@@ -193,7 +211,6 @@ module Statistics
       end
 
       self.end_at = Time.now.beginning_of_day.utc + 1.day if self.end_at > Time.now.utc
-
       nil
     end
 
