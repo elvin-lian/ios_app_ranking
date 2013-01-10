@@ -183,13 +183,22 @@ module Statistics
         self.begin_at = parse_datetime(self.params['begin_at'])
         self.end_at = parse_datetime(self.params['end_at'])
       end
-
+      Rails.logger.debug("=====begin_at: #{self.begin_at}, #{self.end_at}")
       if date
         self.begin_at = date
         self.end_at = date + 1.day
       elsif self.begin_at and self.end_at
-        self.begin_at = self.begin_at.localtime.beginning_of_day.utc
-        self.end_at = self.end_at.localtime.utc
+        case stats_type
+          when 'Statistics::Daily'
+            self.begin_at = self.begin_at.localtime.beginning_of_day.utc
+            self.end_at = self.end_at.localtime.utc
+          when 'Statistics::Hourly'
+            self.begin_at = self.begin_at.localtime.beginning_of_hour.utc
+            self.end_at = self.end_at.localtime.beginning_of_hour.utc
+          else
+            self.begin_at = self.begin_at.localtime.beginning_of_day.utc
+            self.end_at = self.end_at.localtime.beginning_of_hour.utc
+        end
       else
         case stats_type
           when 'Statistics::Daily'
@@ -203,7 +212,7 @@ module Statistics
             self.end_at = Time.now.utc
         end
       end
-
+      Rails.logger.debug("=====begin_at: #{self.begin_at}, #{self.end_at}")
       if self.begin_at > Time.now.utc
         self.begin_at = Time.now.beginning_of_day.utc
         self.end_at = self.begin_at + 1.day
