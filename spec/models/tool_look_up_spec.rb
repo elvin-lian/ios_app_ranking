@@ -156,7 +156,7 @@ describe ToolLookUp do
   end
 
 
-  describe 'run', working: true do
+  describe 'batch_run' do
     before do
       str = File.read(File.dirname(__FILE__) + '/../fixtures/rss_feed_result_6009')
       ToolLookUp.stub(:fetch_by_url).and_return(JSON.parse(str.to_s))
@@ -169,7 +169,7 @@ describe ToolLookUp do
       RankBase.table_name = @feed.rank_table_name
       RankBase.destroy_all
 
-      ToolLookUp.send :run, 'CN', 'topfreeapplication', 6009, 0
+      ToolLookUp.send :batch_run, 'CN', 'topfreeapplication'
 
       res = 0
       RankBase.group('rank').count.each { |k, count| res = res + count.to_i }

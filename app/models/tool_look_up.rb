@@ -4,13 +4,9 @@ class ToolLookUp
     def batch_run country, feed_type
       country = country.downcase
       feed_type = feed_type.downcase
-      total_count = RssFeed.where(country: country, feed_type: feed_type).count
-      limit = (total_count / 2.0).ceil # max poll of db connection is 8
-      offset = 0
-      while offset < total_count
-        run(country, feed_type, limit, offset)
-        ActiveRecord::Base.connection.close
-        offset += limit
+      RssFeed.where(country: country, feed_type: feed_type).each do |feed|
+        data = get_data(feed.url)
+        save(feed.rank_table_name, add_feed_info_to_apps(feed, data)) if data
       end
       true
     end
@@ -71,14 +67,6 @@ class ToolLookUp
 
     private
 
-    def run country, feed_type, limit, offset
-      RssFeed.where(country: country, feed_type: feed_type).limit(limit).offset(offset).each do |feed|
-        data = get_data(feed.url)
-        save(feed.rank_table_name, add_feed_info_to_apps(feed, data)) if data
-      end
-      true
-    end
-
     def get_data feed_url
       retries = 0
       max_retries = 10
@@ -100,17 +88,17 @@ class ToolLookUp
         if (a = IosApp.find_by_track_id(app[:track_id]))
           feed_type_arr = a.feed_type.to_s.split(',')
           feed_type_arr << app[:feed_type]
-          app[:feed_type] = feed_type_arr.uniq.join(',')
+          a.feed_type = feed_type_arr.uniq.join(',')
 
           feed_genre_arr = a.feed_genre.to_s.split(',')
           feed_genre_arr << app[:feed_genre]
-          app[:feed_genre] = feed_genre_arr.uniq.join(',')
+          a.feed_genre = feed_genre_arr.uniq.join(',')
 
           feed_country_arr = a.feed_country.to_s.split(',')
           feed_country_arr << app[:feed_country]
-          app[:feed_country] = feed_country_arr.uniq.join(',')
+          a.feed_country = feed_country_arr.uniq.join(',')
 
-          a.update_attributes(app)
+          a.save
         else
           a = IosApp.create(app)
         end
