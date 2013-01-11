@@ -39,7 +39,7 @@ describe ToolLookUp do
       got[:apps].first.should eq ({
           artwork_url_100: 'http://a1303.phobos.apple.com/us/r1000/060/Purple/v4/e6/88/97/e6889717-8301-7eff-e08a-0989ac3e1234/mzl.ysodlegv.100x100-75.png',
           currency: 'CNY',
-          price: '0.00000',
+          price: 0.0,
           primary_genre_id: '6014',
           track_id: '468575024',
           track_name: '天朝教育委员会',
@@ -59,7 +59,7 @@ describe ToolLookUp do
       got[:apps].first.should eq ({
           artwork_url_100: 'http://a1303.phobos.apple.com/us/r1000/060/Purple/v4/e6/88/97/e6889717-8301-7eff-e08a-0989ac3e1234/mzl.ysodlegv.100x100-75.png',
           currency: 'CNY',
-          price: '0.00000',
+          price: 0.0,
           primary_genre_id: '6014',
           track_id: '468575024',
           track_name: '天朝教育委员会',
@@ -78,7 +78,7 @@ describe ToolLookUp do
           apps: [{
                      artwork_url_100: 'http://a1303.phobos.apple.com/us/r1000/060/Purple/v4/e6/88/97/e6889717-8301-7eff-e08a-0989ac3e1234/mzl.ysodlegv.100x100-75.png',
                      currency: 'CNY',
-                     price: '0.00000',
+                     price: 0.0,
                      primary_genre_id: '6014',
                      track_id: '468575024',
                      track_name: '天朝教育委员会',
@@ -125,7 +125,7 @@ describe ToolLookUp do
           apps: [{
                      artwork_url_100: 'http://a1303.phobos.apple.com/us/r1000/060/Purple/v4/e6/88/97/e6889717-8301-7eff-e08a-0989ac3e1234/mzl.ysodlegv.100x100-75.png',
                      currency: 'CNY',
-                     price: '0.00000',
+                     price: 0.0,
                      primary_genre_id: '6014',
                      track_id: '468575024',
                      track_name: '天朝教育委员会',
@@ -134,16 +134,15 @@ describe ToolLookUp do
       }
     end
 
-    it 'should add rss feed info to ios app', working: true do
+    it 'should add rss feed info to ios app' do
       got = ToolLookUp.send(:add_feed_info_to_apps, @feed, @data)
-      p got
       got.should eq ({
           updated: '2012-12-20 07:00:00',
           added_at: Time.now.utc.beginning_of_hour.to_formatted_s(:db),
           apps: [{
                      artwork_url_100: 'http://a1303.phobos.apple.com/us/r1000/060/Purple/v4/e6/88/97/e6889717-8301-7eff-e08a-0989ac3e1234/mzl.ysodlegv.100x100-75.png',
                      currency: 'CNY',
-                     price: '0.00000',
+                     price: 0.0,
                      primary_genre_id: '6014',
                      track_id: '468575024',
                      track_name: '天朝教育委员会',
@@ -153,6 +152,28 @@ describe ToolLookUp do
                      feed_genre: '6014'
                  }]
       })
+    end
+  end
+
+
+  describe 'run', working: true do
+    before do
+      str = File.read(File.dirname(__FILE__) + '/../fixtures/rss_feed_result_6009')
+      ToolLookUp.stub(:fetch_by_url).and_return(JSON.parse(str.to_s))
+
+      url = 'https://itunes.apple.com/CN/rss/topfreeapplications/limit=300/genre=6009/json'
+      @feed = RssFeed.create(:country => 'CN', :feed_genre => 6009, :feed_type => 'topfreeapplication', :url => url)
+    end
+
+    it 'should create 300 ranking' do
+      RankBase.table_name = @feed.rank_table_name
+      RankBase.destroy_all
+
+      ToolLookUp.send :run, 'CN', 'topfreeapplication', 6009, 0
+
+      res = 0
+      RankBase.group('rank').count.each { |k, count| res = res + count.to_i }
+      res.should eq 300
     end
   end
 end

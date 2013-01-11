@@ -7,15 +7,11 @@ class ToolLookUp
       total_count = RssFeed.where(country: country, feed_type: feed_type).count
       limit = (total_count / 2.0).ceil # max poll of db connection is 8
       offset = 0
-      threads = []
       while offset < total_count
-        threads << Thread.new(offset) do |o|
-          run(country, feed_type, limit, o)
-          ActiveRecord::Base.connection.close
-        end
+        run(country, feed_type, limit, offset)
+        ActiveRecord::Base.connection.close
         offset += limit
       end
-      threads.each { |aThread| aThread.join }
       true
     end
 
@@ -36,8 +32,19 @@ class ToolLookUp
       retries = 0
       max_retries = 10
       begin
-        response = Curl::Easy.http_get(url)
-        res = JSON.parse(response.body_str) if response.body_str
+        if retries != 0
+          Rails.logger.debug("==#{Time.now.to_s}, Itunes lookup #{url} error retry, run: #{retries}")
+        end
+
+        while res.nil? and retries < max_retries
+          response = Curl::Easy.http_get(url)
+          if response.body_str and response.body_str.strip != ''
+            res = JSON.parse(response.body_str.strip)
+          else
+            retries += 1
+            Rails.logger.debug("==#{Time.now.to_s}, Itunes lookup #{url} null error: run: #{retries}")
+          end
+        end
 
       rescue => error
         retries += 1
@@ -79,7 +86,7 @@ class ToolLookUp
       while retries < max_retries and (data.nil? or data[:updated].nil? or data[:apps].nil? or data[:apps].size < 1)
         data = format_feed_result fetch_by_url(feed_url)
         retries += 1
-        sleep( retries + retries * 2)
+        sleep(retries + retries * 2)
         Rails.logger.debug "==#{Time.now.to_s}--#{feed_url} run: #{retries}"
       end
       data
@@ -87,6 +94,7 @@ class ToolLookUp
 
     def save rank_table_name, data
       return nil unless data and data[:updated] and data[:apps].size > 0
+
       rank = 0
       data[:apps].each do |app|
         if (a = IosApp.find_by_track_id(app[:track_id]))
@@ -131,7 +139,7 @@ class ToolLookUp
       {
           artwork_url_100: app['im:image'].last['label'],
           currency: app['im:price']['attributes']['currency'],
-          price: app['im:price']['attributes']['amount'].to_d,
+          price: app['im:price']['attributes']['amount'].to_f,
           primary_genre_id: app['category']['attributes']['im:id'],
           track_id: app['id']['attributes']['im:id'],
           track_name: app['im:name']['label'],
