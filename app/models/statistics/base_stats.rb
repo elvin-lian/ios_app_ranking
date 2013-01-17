@@ -183,7 +183,7 @@ module Statistics
         self.begin_at = parse_datetime(self.params['begin_at'])
         self.end_at = parse_datetime(self.params['end_at'])
       end
-      Rails.logger.debug("=====begin_at: #{self.begin_at}, #{self.end_at}")
+
       if date
         self.begin_at = date
         self.end_at = date + 1.day
@@ -203,26 +203,38 @@ module Statistics
         case stats_type
           when 'Statistics::Daily'
             self.begin_at = (Time.now - 23.days).beginning_of_day.utc
-            self.end_at = Time.now.utc
+            self.end_at = Time.now.beginning_of_hour.utc
           when 'Statistics::Hourly'
             self.begin_at = (Time.now - 24.hours).beginning_of_hour.utc
             self.end_at = Time.now.beginning_of_hour.utc
           else
             self.begin_at = Time.now.beginning_of_day.utc
-            self.end_at = Time.now.utc
+            self.end_at = Time.now.beginning_of_hour.utc
         end
       end
-      Rails.logger.debug("=====begin_at: #{self.begin_at}, #{self.end_at}")
+
+      if Rails.env.production? # Production deploy at 2013
+        if self.begin_at.year < 2013
+          case stats_type
+            when 'Statistics::Daily'
+              self.begin_at = Time.now.beginning_of_year.utc
+            else
+              self.begin_at = Time.now.beginning_of_day.utc
+          end
+        end
+      end
+
       if self.begin_at > Time.now.utc
         self.begin_at = Time.now.beginning_of_day.utc
         self.end_at = self.begin_at + 1.day
       end
 
-      if self.end_at - self.begin_at > 100.days
+      if self.begin_at > self.end_at or (self.end_at - self.begin_at > 100.days)
         self.end_at = self.begin_at + 1.days
       end
 
       self.end_at = Time.now.beginning_of_day.utc + 1.day if self.end_at > Time.now.utc
+
       nil
     end
 
