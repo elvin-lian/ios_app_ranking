@@ -98,7 +98,9 @@ module Statistics
       key = "started_log_at_#{self.ios_app.id}_#{country}_#{feed_type}_#{app_genre}"
       log_at = Rails.cache.fetch(md5(key), expires_in: 30.days.to_i) do
         res = ''
-        [Time.now.year - 1, Time.now.year].each do |year|
+        years = [Time.now.year - 1, Time.now.year]
+        years.delete(2012) if Rails.env.production? # Production deploy at 2013
+        years.each do |year|
           RankBase.table_name = RankBase.format_table_name(country, feed_type, app_genre, year)
           if (rb = RankBase.where(ios_app_id: self.ios_app.id).order('id ASC').first)
             res = rb.added_at.to_s
@@ -229,7 +231,7 @@ module Statistics
         self.end_at = self.begin_at + 1.day
       end
 
-      if self.begin_at > self.end_at or (self.end_at - self.begin_at > 100.days)
+      if self.begin_at > self.end_at or (self.end_at - self.begin_at > 300.days)
         self.end_at = self.begin_at + 1.days
       end
 
