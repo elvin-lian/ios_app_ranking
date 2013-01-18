@@ -29,7 +29,7 @@ class ToolLookUp
       max_retries = 10
       begin
         if retries != 0
-          Rails.logger.debug("==#{Time.now.to_s}, Itunes lookup #{url} error retry, run: #{retries}")
+          Rails.logger.info("==#{Time.now.to_s}, Itunes lookup #{url} error retry, run: #{retries}")
         end
 
         while res.nil? and retries < max_retries
@@ -38,13 +38,13 @@ class ToolLookUp
             res = JSON.parse(response.body_str.strip)
           else
             retries += 1
-            Rails.logger.debug("==#{Time.now.to_s}, Itunes lookup #{url} null error: run: #{retries}")
+            Rails.logger.info("==#{Time.now.to_s}, Itunes lookup #{url} null error: run: #{retries}")
           end
         end
 
       rescue => error
         retries += 1
-        Rails.logger.debug("==#{Time.now.to_s}, Itunes lookup #{url} error: #{error}, run: #{retries}")
+        Rails.logger.info("==#{Time.now.to_s}, Itunes lookup #{url} error: #{error}, run: #{retries}")
         sleep(retries + retries * 2)
         retry if retries < max_retries
       end
@@ -75,7 +75,7 @@ class ToolLookUp
         data = format_feed_result fetch_by_url(feed_url)
         retries += 1
         sleep(retries + retries * 2)
-        Rails.logger.debug "==#{Time.now.to_s}--#{feed_url} run: #{retries}"
+        Rails.logger.info "==#{Time.now.to_s}--#{feed_url} run: #{retries}"
       end
       data
     end
