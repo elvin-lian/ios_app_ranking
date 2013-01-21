@@ -1,24 +1,40 @@
 class ToolLookUp
   class << self
 
+    def max_retries
+      15
+    end
+
+    def added_at
+      @added_at ||= Time.now.utc.beginning_of_hour.to_formatted_s(:db)
+    end
+
     def batch_run country, feed_type
       country = country.downcase
       feed_type = feed_type.downcase
       RssFeed.where(country: country, feed_type: feed_type).each do |feed|
-        data = get_data(feed.url)
-        save(feed.rank_table_name, add_feed_info_to_apps(feed, data)) if data
+        i = 0
+        is_break = false
+        while i < 5 and !is_break
+          i += 1
+          is_break = _run(feed)
+        end
       end
       true
     end
 
     def run_one rss_reed_id
       if (feed = RssFeed.find_by_id(rss_reed_id))
-        data = get_data(feed.url)
-        save(feed.rank_table_name, add_feed_info_to_apps(feed, data)) if data
-        true
+        _run(feed)
       else
-        nil
+        false
       end
+    end
+
+    def _run feed
+      data = get_data(feed.url)
+      res = save(feed.rank_table_name, add_feed_info_to_apps(feed, data))
+      res ? true : false
     end
 
     def fetch_by_url url
@@ -26,7 +42,6 @@ class ToolLookUp
       return res if url.blank?
 
       retries = 0
-      max_retries = 10
       begin
         if retries != 0
           Rails.logger.info("==#{Time.now.to_s}, Itunes lookup #{url} error retry, run: #{retries}")
@@ -54,7 +69,7 @@ class ToolLookUp
     def format_feed_result feed_result
       return nil unless feed_result.is_a?(Hash) and (feed = feed_result['feed'])
 
-      data = {:updated => nil, :apps => [], added_at: Time.now.utc.beginning_of_hour.to_formatted_s(:db)}
+      data = {:updated => nil, :apps => [], added_at: added_at}
 
       # updated_at
       data[:updated] = Time.parse(feed['updated']['label']).utc.to_formatted_s(:db) if feed['updated']
@@ -69,7 +84,6 @@ class ToolLookUp
 
     def get_data feed_url
       retries = 0
-      max_retries = 10
       data = nil
       while retries < max_retries and (data.nil? or data[:updated].nil? or data[:apps].nil? or data[:apps].size < 1)
         data = format_feed_result fetch_by_url(feed_url)
@@ -82,7 +96,7 @@ class ToolLookUp
 
     def save rank_table_name, data
       return nil unless data and data[:updated] and data[:apps].size > 0
-
+      saved_count = 0
       rank = 0
       data[:apps].each do |app|
         if (a = IosApp.find_by_track_id(app[:track_id]))
@@ -105,9 +119,13 @@ class ToolLookUp
 
         if a and a.id
           rank += 1
-          RankBase.fly_create rank_table_name, {ios_app_id: a.id, rank: rank, added_at: data[:added_at], last_updated: data[:updated]}
+          rank_base = RankBase.fly_create rank_table_name, {ios_app_id: a.id, rank: rank, added_at: data[:added_at], last_updated: data[:updated]}
+
+          saved_count += 1 if rank_base and rank_base.id
         end
       end
+      Rails.logger.debug("============saved_count: #{saved_count}")
+      saved_count == 0 ? nil : true
     end
 
     def add_feed_info_to_apps feed, data
