@@ -5,7 +5,7 @@ class V1::ApiBaseController < ActionController::Base
   respond_to :json
 
   before_filter :set_locale
-  #before_filter :validate_user, :authenticate_request
+  before_filter :validate_user, :authenticate_request
 
   def authenticate_request
     except_params = except_auth_params + [controller_name.singularize, 'controller', 'action']

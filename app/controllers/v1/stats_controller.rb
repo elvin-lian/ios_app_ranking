@@ -9,7 +9,7 @@ class V1::StatsController < V1::ApiBaseController
   end
 
   def except_auth_params
-    %w(stats_type)
+    %w(stats_type id)
   end
 
 end

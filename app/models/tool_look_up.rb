@@ -89,7 +89,7 @@ class ToolLookUp
         data = format_feed_result fetch_by_url(feed_url)
         retries += 1
         sleep(retries + retries * 2)
-        Rails.logger.info "==#{Time.now.to_s}--#{feed_url} run: #{retries}"
+        Rails.logger.info "==#{Time.now.to_s}--added_at: #{added_at}, url: #{feed_url} run: #{retries}"
       end
       data
     end
