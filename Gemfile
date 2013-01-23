@@ -8,7 +8,7 @@ gem 'rails', '3.2.11'
 gem 'mysql2'
 gem 'jquery-rails'
 
-gem 'curb', '~> 0.8.3'
+gem 'curb-fu', '~> 0.6.2'
 
 # daemons
 gem 'daemons', '~> 1.1.9'

@@ -44,22 +44,26 @@ class ToolLookUp
       retries = 0
       begin
         if retries != 0
-          Rails.logger.info("==#{Time.now.to_s}, Itunes lookup #{url} error retry, run: #{retries}")
+          Rails.logger.info("==#{Time.now.utc.to_s}--added_at: #{added_at}, Itunes lookup #{url} error retry, run: #{retries}")
         end
 
         while res.nil? and retries < max_retries
-          response = Curl::Easy.http_get(url)
-          if response.body_str and response.body_str.strip != ''
-            res = JSON.parse(response.body_str.strip)
+          response = CurbFu.get(url)
+          if response.success? and response.body.strip != ''
+            if response["Content-Encoding"].to_s.downcase == 'gzip'
+              res = JSON.parse(ActiveSupport::Gzip.decompress(response.body))
+            else
+              res = JSON.parse(response.body)
+            end
           else
             retries += 1
-            Rails.logger.info("==#{Time.now.to_s}, Itunes lookup #{url} null error: run: #{retries}")
+            Rails.logger.info("==#{Time.now.utc.to_s}--added_at: #{added_at}, Itunes lookup #{url} null error: run: #{retries}")
           end
         end
 
       rescue => error
         retries += 1
-        Rails.logger.info("==#{Time.now.to_s}, Itunes lookup #{url} error: #{error}, run: #{retries}")
+        Rails.logger.info("==#{Time.now.utc.to_s}--added_at: #{added_at}, Itunes lookup #{url} error: #{error}, run: #{retries}")
         sleep(retries + retries * 2)
         retry if retries < max_retries
       end
@@ -89,7 +93,7 @@ class ToolLookUp
         data = format_feed_result fetch_by_url(feed_url)
         retries += 1
         sleep(retries + retries * 2)
-        Rails.logger.info "==#{Time.now.to_s}--added_at: #{added_at}, url: #{feed_url} run: #{retries}"
+        Rails.logger.info "==#{Time.now.utc.to_s}--added_at: #{added_at}, url: #{feed_url} run: #{retries}"
       end
       data
     end
